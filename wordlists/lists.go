@@ -8,6 +8,9 @@ import (
 //go:generate go run process_wordlist/main.go --name en --output eff_large_wordlist.go eff_large_wordlist.txt
 //go:generate gofmt -w eff_large_wordlist.go
 
+//go:generate go run process_wordlist/main.go --name de --output german.go german.txt
+//go:generate gofmt -w german.go
+
 // Lists contains the list of valid word lists.
 var Lists = make(map[string][]string)
 
