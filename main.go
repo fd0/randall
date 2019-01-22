@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"os"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/fd0/randall/wordlists"
 	"github.com/spf13/pflag"
@@ -26,9 +27,14 @@ func die(msg string, args ...interface{}) {
 	os.Exit(1)
 }
 
+func capitalizeWord(w string) string {
+	r, size := utf8.DecodeRuneInString(w)
+	return string(strings.ToUpper(string(r))) + w[size:]
+}
+
 func capitalize(words []string) {
 	for i, word := range words {
-		words[i] = strings.ToUpper(string(word[0])) + word[1:]
+		words[i] = capitalizeWord(word)
 	}
 }
 
