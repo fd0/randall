@@ -1,5 +1,5 @@
-[![Status badge for tests](https://github.com/happal/monsoon/workflows/Build%20and%20tests/badge.svg)](https://github.com/happal/monsoon/actions?query=workflow%3A%22Build+and+tests%22)
-[![Status badge for style checkers](https://github.com/happal/monsoon/workflows/Style%20Checkers/badge.svg)](https://github.com/happal/monsoon/actions?query=workflow%3A%22Style+Checkers%22)
+[![Status badge for tests](https://github.com/fd0/randall/workflows/Build%20and%20tests/badge.svg)](https://github.com/fd0/randall/actions?query=workflow%3A%22Build+and+tests%22)
+[![Status badge for style checkers](https://github.com/fd0/randall/workflows/Style%20Checkers/badge.svg)](https://github.com/fd0/randall/actions?query=workflow%3A%22Style+Checkers%22)
 
 # randall
 
