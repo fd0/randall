@@ -1,0 +1,36 @@
+name: Build and tests<test>
+on: [push, pull_request]
+jobs:
+  build:
+    name: Build
+    strategy:
+      matrix:
+        go-version:
+          - 1.14.x
+          - 1.15.x
+    runs-on: ubuntu-latest
+
+    env:
+      GOPROXY: https://proxy.golang.org
+
+    steps:
+
+      - name: Set up Go ${{ matrix.go-version }}
+        uses: actions/setup-go@v1
+        with:
+          go-version: ${{ matrix.go-version }}
+        id: go
+
+      - name: Check out code
+        uses: actions/checkout@v1
+
+      - name: Build
+        run: |
+          GOOS=linux go build -o monsoon_linux
+          GOOS=windows go build -o monsoon_linux
+          GOOS=darwin go build -o monsoon_linux
+
+      - name: Run tests
+        run: |
+          export PATH=$HOME/bin:$PATH
+          go test ./...
