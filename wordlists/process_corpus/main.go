@@ -17,18 +17,10 @@ func warn(msg string, args ...interface{}) {
 	fmt.Fprintf(os.Stderr, msg, args...)
 }
 
-func verbose(msg string, args ...interface{}) {
-	if !strings.HasSuffix(msg, "\n") {
-		msg += "\n"
-	}
-	fmt.Fprintf(os.Stderr, msg, args...)
-}
-
 const allowedChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZöäüÖÄÜß"
 
 func check(word string) bool {
 	if !utf8.ValidString(word) {
-		// verbose("word %q is not valid UTF-8", word)
 		return false
 	}
 
@@ -36,12 +28,10 @@ func check(word string) bool {
 	runes := 0
 	for _, r := range word {
 		if r == utf8.RuneError {
-			// verbose("word %q contains the UTF-8 replacement character", word)
 			return false
 		}
 
 		if !strings.ContainsAny(allowedChars, string(r)) {
-			// verbose("word %q contains invalid character %U (%c)", word, r, r)
 			return false
 		}
 
@@ -49,18 +39,15 @@ func check(word string) bool {
 	}
 
 	if runes < 3 {
-		// verbose("word %q is too short", word)
 		return false
 	}
 
 	if runes > 11 {
-		// verbose("word %q is too long", word)
 		return false
 	}
 
 	// filter special characters
 	if strings.ContainsAny(word, `"'-./ 0123456789`) {
-		// verbose("word %q contains special character", word)
 		return false
 	}
 
@@ -104,7 +91,6 @@ func main() {
 		}
 
 		if _, ok := words[word]; ok {
-			// verbose("word %q already found", word)
 			continue
 		}
 

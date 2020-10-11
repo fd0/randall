@@ -103,6 +103,9 @@ func main() {
 		Name:  opts.Name,
 		Words: words,
 	})
+	if err != nil {
+		panic(err)
+	}
 
 	err = f.Close()
 	if err != nil {
