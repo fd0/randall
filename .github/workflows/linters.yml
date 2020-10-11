@@ -1,25 +1,26 @@
 name: Style Checkers
-on: [push, pull_request]
+on:
+  # run tests on push to master, but not when other branches are pushed to
+  push:
+    branches:
+      - master
+
+  # run tests for pull requests to master
+  pull_request:
+    branches:
+      - master
+
 jobs:
-  build:
+  check:
     name: Check
     runs-on: ubuntu-latest
     steps:
 
-      - name: Set up Go
-        uses: actions/setup-go@v1
-        with:
-          go-version: 1.15.x
-        id: go
-
-      - name: Install golang-ci
-        run: |
-          curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $HOME/bin latest
-
       - name: Check out code
         uses: actions/checkout@v1
 
-      - name: Run golang-ci
-        run: |
-          export PATH=$HOME/bin:$PATH
-          golangci-lint run --enable goimports,govet,misspell,stylecheck
+      - uses: docker://golangci/golangci-lint:v1.23.8
+        with:
+          args: golangci-lint run --disable unused,errcheck,ineffassign,staticcheck,gosimple
+        env:
+          CGO_ENABLED: 0
