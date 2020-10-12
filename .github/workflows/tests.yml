@@ -42,17 +42,17 @@ jobs:
 
       - uses: actions/upload-artifact@v2
         with:
-          name: randall_linux_amd64 (Go ${{ matrix.go-version }})
+          name: randall (Linux, amd64, Go ${{ matrix.go-version }})
           path: randall_linux_amd64
 
       - uses: actions/upload-artifact@v2
         with:
-          name: randall_windows_amd64.exe (Go ${{ matrix.go-version }})
+          name: randall (Windows, amd64, Go ${{ matrix.go-version }})
           path: randall_windows_amd64.exe
 
       - uses: actions/upload-artifact@v2
         with:
-          name: randall_darwin_amd64 (Go ${{ matrix.go-version }})
+          name: randall (macOS, amd64, Go ${{ matrix.go-version }})
           path: randall_darwin_amd64
 
       - name: Run tests
