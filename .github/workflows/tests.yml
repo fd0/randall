@@ -36,12 +36,12 @@ jobs:
 
       - name: Build
         run: |
-          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o randall_linux_amd64
-          CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o randall_windows_amd64.exe
-          CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o randall_darwin_amd64
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o randall_linux_${{ matrix.go-version }}_amd64
+          CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o randall_windows_${{ matrix.go-version }}_amd64.exe
+          CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o randall_darwin_${{ matrix.go-version }}_amd64
 
       - name: Upload binaries
-        uses: actions/checkout@v2
+        uses: actions/upload-artifact@v2
         with:
           name: Binaries
           path: randall_*
