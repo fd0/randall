@@ -41,3 +41,17 @@ jobs:
       - name: Run tests
         run: |
           CGO_ENABLED=0 go test ./...
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Check out code
+        uses: actions/checkout@v1
+
+      - uses: docker://golangci/golangci-lint:latest
+        with:
+          args: golangci-lint run --disable unused,errcheck,ineffassign,staticcheck,gosimple
+        env:
+          CGO_ENABLED: 0
