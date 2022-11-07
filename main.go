@@ -15,12 +15,19 @@ import (
 	"github.com/spf13/pflag"
 )
 
+const (
+	JoinModeSpace = "space"
+	JoinModeCamel = "camel"
+	JoinModeMinus = "minus"
+)
+
 // Options collects options set via command-line flags.
 type Options struct {
 	Words       uint
 	Wordlist    string
 	Passphrases uint
 	Reconstruct bool
+	JoinMode    string
 }
 
 func die(msg string, args ...interface{}) {
@@ -42,7 +49,7 @@ func capitalize(words []string) {
 	}
 }
 
-func generate(n uint, list []string) string {
+func generate(n uint, list []string, joinMode string) string {
 	words := make([]string, 0, n)
 	for i := uint(0); i < n; i++ {
 		num, err := rand.Int(rand.Reader, big.NewInt(int64(len(list))))
@@ -62,14 +69,23 @@ func generate(n uint, list []string) string {
 		words = append(words, list[idx])
 	}
 
-	capitalize(words)
-	return strings.Join(words, "")
+	switch strings.ToLower(joinMode) {
+	case JoinModeSpace, "":
+		return strings.Join(words, " ")
+	case JoinModeMinus:
+		return strings.Join(words, "-")
+	case JoinModeCamel:
+		capitalize(words)
+		return strings.Join(words, "")
+	default:
+		die("unknown join mode: %s", joinMode)
+		return ""
+	}
 }
 
 func completer(wordlist []string) prompt.Completer {
 	capitalize(wordlist)
 	return func(d prompt.Document) []prompt.Suggest {
-
 		matches := fuzzy.RankFindFold(d.GetWordBeforeCursor(), wordlist)
 		sort.Sort(matches)
 
@@ -92,6 +108,7 @@ func main() {
 	flags.UintVarP(&opts.Passphrases, "passphrases", "n", 1, "generate `n` passphrases")
 	flags.StringVarP(&opts.Wordlist, "wordlist", "l", "en", fmt.Sprintf("use `wordlist` as the source for words (valid: %v)", strings.Join(wordlists.Names(), ", ")))
 	flags.BoolVarP(&opts.Reconstruct, "reconstruct", "r", false, "interactively reconstruct a password based on a wordlist")
+	flags.StringVarP(&opts.JoinMode, "join-mode", "j", JoinModeSpace, "choose how words are joined: 'space' (like this, default), 'camel' (LikeThis) or minus (like-this)")
 
 	err := flags.Parse(os.Args)
 	if err == pflag.ErrHelp {
@@ -155,6 +172,6 @@ func main() {
 	}
 
 	for i := uint(0); i < opts.Passphrases; i++ {
-		fmt.Printf("%v\n", generate(opts.Words, list))
+		fmt.Printf("%v\n", generate(opts.Words, list, opts.JoinMode))
 	}
 }
