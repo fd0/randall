@@ -78,7 +78,8 @@ func generate(n uint, list []string, joinMode string) string {
 		capitalize(words)
 		return strings.Join(words, "")
 	default:
-		die("unknown join mode: %s", joinMode)
+		die("unknown join mode %q: choose between %q, %q and %q", joinMode,
+			JoinModeSpace, JoinModeCamel, JoinModeMinus)
 		return ""
 	}
 }
