@@ -109,7 +109,13 @@ func main() {
 	flags.UintVarP(&opts.Passphrases, "passphrases", "n", 1, "generate `n` passphrases")
 	flags.StringVarP(&opts.Wordlist, "wordlist", "l", "en", fmt.Sprintf("use `wordlist` as the source for words (valid: %v)", strings.Join(wordlists.Names(), ", ")))
 	flags.BoolVarP(&opts.Reconstruct, "reconstruct", "r", false, "interactively reconstruct a password based on a wordlist")
-	flags.StringVarP(&opts.JoinMode, "join-mode", "j", JoinModeSpace, "choose how words are joined (\"space\" (like this), \"camel\" (LikeThis) or \"minus\" (like-this))")
+
+	mode := JoinModeSpace
+	if v, ok := os.LookupEnv("RANDALL_JOIN_MODE"); ok {
+		mode = v
+	}
+
+	flags.StringVarP(&opts.JoinMode, "join-mode", "j", mode, "choose how words are joined (\"space\" (like this), \"camel\" (LikeThis) or \"minus\" (like-this))")
 
 	err := flags.Parse(os.Args)
 	if err == pflag.ErrHelp {
