@@ -17,7 +17,7 @@ const (
 	allowedChars         = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZöäüÖÄÜß"
 	specialChars         = `"'-./ 0123456789`
 	defaultMinCharacters = 3
-	defaultMaxCharacters = 11
+	defaultMaxCharacters = 19
 	defaultMinWords      = 7776
 )
 
