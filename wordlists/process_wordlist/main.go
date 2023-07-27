@@ -2,20 +2,58 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
+	"go/format"
 	"os"
 	"strings"
 	"text/template"
+	"unicode/utf8"
 
 	"github.com/spf13/pflag"
 )
 
-func die(msg string, args ...interface{}) {
-	if !strings.HasSuffix(msg, "\n") {
-		msg += "\n"
+const (
+	allowedChars         = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZöäüÖÄÜß"
+	specialChars         = `"'-./ 0123456789`
+	defaultMinCharacters = 3
+	defaultMaxCharacters = 11
+	defaultMinWords      = 7776
+)
+
+func check(word string, minCharacters uint, maxCharacters uint) error {
+	if !utf8.ValidString(word) {
+		return fmt.Errorf("not a valid UTF-8 string")
 	}
-	fmt.Fprintf(os.Stderr, msg, args...)
-	os.Exit(1)
+
+	// note: range over string iterates over runes (decoding UTF-8 characters)
+	var runes uint
+	for _, r := range word {
+		if r == utf8.RuneError {
+			return fmt.Errorf("contains error rune")
+		}
+
+		if !strings.ContainsAny(allowedChars, string(r)) {
+			return fmt.Errorf("character %s is not an allowed character (%s)", string(r), allowedChars)
+		}
+
+		runes++
+	}
+
+	if runes < minCharacters {
+		return fmt.Errorf("length %d is shorter than %d characters", runes, minCharacters)
+	}
+
+	if runes > maxCharacters {
+		return fmt.Errorf("length %d is longer than %d characters", runes, maxCharacters)
+	}
+
+	// filter special characters
+	if strings.ContainsAny(word, specialChars) {
+		return fmt.Errorf("contains special characters (%s)", specialChars)
+	}
+
+	return nil
 }
 
 // for the format of the "do not edit" string see https://golang.org/s/generatedcode
@@ -32,12 +70,14 @@ Lists[{{ printf "%q" .Name }}] = []string{
 }
 `
 
-func readFiles(files ...string) (words []string, err error) {
+func readFiles(minWords uint, minCharacters uint, maxCharacters uint, files ...string) (words []string, err error) {
 	for _, filename := range files {
 		f, err := os.Open(filename)
 		if err != nil {
 			return nil, err
 		}
+
+		defer f.Close()
 
 		sc := bufio.NewScanner(f)
 		for sc.Scan() {
@@ -46,7 +86,14 @@ func readFiles(files ...string) (words []string, err error) {
 			}
 
 			data := strings.Fields(sc.Text())
-			words = append(words, data[len(data)-1])
+			word := data[len(data)-1]
+
+			err := check(word, minCharacters, maxCharacters)
+			if err != nil {
+				return nil, fmt.Errorf("invalid word %q: %w", word, err)
+			}
+
+			words = append(words, word)
 		}
 
 		err = f.Close()
@@ -55,60 +102,88 @@ func readFiles(files ...string) (words []string, err error) {
 		}
 	}
 
+	if len(words) < int(minWords) {
+		return nil, fmt.Errorf("wordlist only contains %d words instead of a minimum of %d", len(words), minWords)
+	}
+
 	return words, nil
 }
 
-func main() {
+func run() error {
 	var opts struct {
-		Output string
-		Name   string
+		output        string
+		name          string
+		minCharacters uint
+		maxCharacters uint
+		minWords      uint
 	}
 
 	flags := pflag.NewFlagSet("process", pflag.ExitOnError)
-	flags.StringVar(&opts.Output, "output", "", "write output to `file`")
-	flags.StringVar(&opts.Name, "name", "", "set wordlist `name`")
+	flags.StringVar(&opts.output, "output", "", "write output to `file`")
+	flags.StringVar(&opts.name, "name", "", "set wordlist `name`")
+	flags.UintVar(&opts.minWords, "min-words", defaultMinWords, "minimum number of words")
+	flags.UintVar(&opts.minCharacters, "min-chars", defaultMinCharacters, "minimum number of characters")
+	flags.UintVar(&opts.maxCharacters, "max-chars", defaultMaxCharacters, "maximum number of characters")
+	flags.SortFlags = false
 
 	err := flags.Parse(os.Args)
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("parse flags: %w", err)
 	}
 
-	if opts.Output == "" {
-		die("output file unset, use --output FILE")
+	if flags.NArg() < 2 {
+		return fmt.Errorf("specify input files as positional arguments")
 	}
 
-	if opts.Name == "" {
-		die("name not set, use --name X")
+	if opts.output == "" {
+		return fmt.Errorf("output file unset, use --output FILE")
+	}
+
+	if opts.name == "" {
+		return fmt.Errorf("name not set, use --name X")
 	}
 
 	tmpl, err := template.New("").Parse(listTemplate)
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("parse template: %w", err)
 	}
 
-	words, err := readFiles(flags.Args()[1:]...)
+	words, err := readFiles(opts.minWords, opts.minCharacters, opts.maxCharacters, flags.Args()[1:]...)
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("read files: %w", err)
 	}
 
-	f, err := os.Create(opts.Output)
-	if err != nil {
-		panic(err)
-	}
+	buf := &bytes.Buffer{}
 
-	err = tmpl.Execute(f, struct {
+	err = tmpl.Execute(buf, struct {
 		Name  string
 		Words []string
 	}{
-		Name:  opts.Name,
+		Name:  opts.name,
 		Words: words,
 	})
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("execute template: %w", err)
 	}
 
-	err = f.Close()
+	generatedCode, err := format.Source(buf.Bytes())
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("format generated code: %w", err)
+	}
+
+	err = os.WriteFile(opts.output, generatedCode, 0o644)
+	if err != nil {
+		return fmt.Errorf("write output: %w", err)
+	}
+
+	return nil
+}
+
+func main() {
+	err := run()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+
+		os.Exit(1)
 	}
 }
