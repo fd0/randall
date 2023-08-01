@@ -4,7 +4,6 @@ package wordlists
 
 func init() {
 	Lists["de-legacy"] = []string{
-		"found",
 		"aachen",
 		"abap",
 		"abbau",
