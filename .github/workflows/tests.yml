@@ -67,8 +67,10 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v1
 
-      - uses: docker://golangci/golangci-lint:latest
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3
         with:
-          args: golangci-lint run --disable unused,errcheck,ineffassign,staticcheck,gosimple
+          version: v1.53
+          args: --verbose --timeout 5m --disable unused,errcheck,ineffassign,staticcheck,gosimple
         env:
           CGO_ENABLED: 0
