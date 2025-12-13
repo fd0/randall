@@ -70,6 +70,6 @@ jobs:
         uses: golangci/golangci-lint-action@v9
         with:
           version: v2.6
-          args: --verbose --timeout 5m --disable unused,errcheck,ineffassign,staticcheck,gosimple
+          args: --verbose --timeout 5m --disable unused,errcheck,ineffassign,staticcheck
         env:
           CGO_ENABLED: 0
